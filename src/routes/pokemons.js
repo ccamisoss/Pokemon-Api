@@ -1,5 +1,5 @@
 const { Router } = require("express");
-const { Pokemon, Tipo } = require("../db.js");
+const { Pokemon } = require("../db.js");
 const { info, forName, forId } = require("../middlewares/middleware.js");
 
 const router = Router();
