@@ -45,6 +45,23 @@ const info = async (by) => {
   return pokemonInfo;
 };
 
+const getSortedPokemons = async (by, order) => {
+  try {
+    const pokemons = await info();
+    let sortedPokemons = [];
+
+    if (order === "asc") {
+      sortedPokemons = pokemons.sort((a, b) => a[`${by}`] - b[`${by}`]);
+    } else if (order === "desc") {
+      sortedPokemons = pokemons.sort((a, b) => b[`${by}`] - a[`${by}`]);
+    }
+
+    return sortedPokemons;
+  } catch (error) {
+    console.error("Hubo un error al solicitar los pokemones", error);
+  }
+};
+
 const forName = async (name) => {
   try {
     const db = await Pokemon.findOne({
@@ -129,4 +146,5 @@ module.exports = {
   info,
   forName,
   forId,
+  getSortedPokemons,
 };
