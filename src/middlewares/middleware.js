@@ -142,9 +142,26 @@ const forId = async (id) => {
   }
 };
 
+const initializeDatabase = async () => {
+  try {
+    const api = await fetch('https://pokeapi.co/api/v2/type');
+    const types = await api.json();
+
+    for (const t of types.results) {
+      const existe = await Tipo.findOne({ where: { name: t.name } });
+      if (existe) return await Tipo.findAll();
+      await Tipo.create({ name: t.name });
+    }
+  } catch (error) {
+    console.error('Error during database initialization:', error);
+  }
+};
+
+
 module.exports = {
   info,
   forName,
   forId,
   getSortedPokemons,
+  initializeDatabase,
 };

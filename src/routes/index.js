@@ -11,7 +11,6 @@ router.use('/types', types)
 
 router.get("/sorted/:by/:order", async (req, res) => {
   const { by, order } = req.params;
-  console.log(req)
 
   const sortedPokemons = await getSortedPokemons(by, order);
 
