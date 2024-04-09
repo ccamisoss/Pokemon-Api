@@ -2,47 +2,51 @@ const fetch = require("node-fetch");
 const { Pokemon, Tipo } = require("../db.js");
 
 const info = async (by) => {
-  const api = await fetch("https://pokeapi.co/api/v2/pokemon?limit=40");
-  const data = await api.json();
-  const bd = await Pokemon.findAll({ include: Tipo });
+  try {
+    const api = await fetch("https://pokeapi.co/api/v2/pokemon?limit=40");
+    const data = await api.json();
+    const bd = await Pokemon.findAll({ include: Tipo });
 
-  let base = [...bd, ...data.results];
+    let base = [...bd, ...data.results];
 
-  if (by === "2") {
-    base = [...bd];
-  } else if (by === "1") {
-    base = [...data.results];
-  }
-
-  let pokemonInfo = [];
-  for (i = 0; i < base.length; i++) {
-    if (!base[i]) return pokemonInfo;
-    if (base[i].url) {
-      const pokemon = await fetch(base[i].url);
-      const info = await pokemon.json();
-
-      pokemonInfo.push({
-        id: info.id,
-        name: info.name,
-        type: info.types.map((t) => t.type.name),
-        img: info.sprites.versions["generation-v"]["black-white"].animated
-          .front_default,
-        fuerza: info.stats[1].base_stat,
-      });
-    } else {
-      pokemonInfo.push({
-        id: base[i].id,
-        idPoke: base[i].idPoke,
-        name: base[i].name,
-        type: base[i].tipos.map((t) => t.name),
-        fuerza: base[i].fuerza,
-        img: "https://media.giphy.com/media/DRfu7BT8ZK1uo/giphy.gif",
-      });
+    if (by === "2") {
+      base = [...bd];
+    } else if (by === "1") {
+      base = [...data.results];
     }
+
+    let pokemonInfo = [];
+    for (i = 0; i < base.length; i++) {
+      if (!base[i]) return pokemonInfo;
+      if (base[i].url) {
+        const pokemon = await fetch(base[i].url);
+        const info = await pokemon.json();
+
+        pokemonInfo.push({
+          id: info.id,
+          name: info.name,
+          type: info.types.map((t) => t.type.name),
+          img: info.sprites.versions["generation-v"]["black-white"].animated
+            .front_default,
+          fuerza: info.stats[1].base_stat,
+        });
+      } else {
+        pokemonInfo.push({
+          id: base[i].id,
+          idPoke: base[i].idPoke,
+          name: base[i].name,
+          type: base[i].tipos.map((t) => t.name),
+          fuerza: base[i].fuerza,
+          img: undefined,
+        });
+      }
+    }
+    // const poke = await Pokemon.findAll({ include: Tipo });
+    // pokemonInfo.push({ ...poke });
+    return pokemonInfo;
+  } catch (error) {
+    console.log('FETCH ERROR:', error)
   }
-  // const poke = await Pokemon.findAll({ include: Tipo });
-  // pokemonInfo.push({ ...poke });
-  return pokemonInfo;
 };
 
 const getSortedPokemons = async (by, order) => {
@@ -50,10 +54,14 @@ const getSortedPokemons = async (by, order) => {
     const pokemons = await info();
     let sortedPokemons = [];
 
-    if (order === "asc") {
-      sortedPokemons = pokemons.sort((a, b) => a[`${by}`] - b[`${by}`]);
-    } else if (order === "desc") {
-      sortedPokemons = pokemons.sort((a, b) => b[`${by}`] - a[`${by}`]);
+    if (by === "fuerza") {
+      order === "asc"
+        ? sortedPokemons = pokemons.sort((a, b) => a.fuerza - b.fuerza)
+        : sortedPokemons = pokemons.sort((a, b) => b.fuerza - a.fuerza);
+    } else {
+      order === "asc"
+        ? sortedPokemons = pokemons.sort((a, b) => a.name.localeCompare(b.name))
+        : sortedPokemons = pokemons.sort((a, b) => b.name.localeCompare(a.name));
     }
 
     return sortedPokemons;
@@ -77,7 +85,7 @@ const forName = async (name) => {
           idPoke: db.idPoke,
           name: db.name,
           type: db.tipos.map((t) => t.name),
-          img: "https://media.giphy.com/media/DRfu7BT8ZK1uo/giphy.gif",
+          img: undefined,
         },
       ];
       return pokemonDb;
@@ -127,7 +135,7 @@ const forId = async (id) => {
       id: db.idPoke,
       name: db.name,
       type: db.tipos.map((t) => t.name),
-      img: "https://media.giphy.com/media/DRfu7BT8ZK1uo/giphy.gif",
+      img: undefined,
       vida: db.vida,
       fuerza: db.fuerza,
       defensa: db.defensa,
