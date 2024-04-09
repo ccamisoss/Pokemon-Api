@@ -10,8 +10,7 @@ router.get("/", async (req, res) => {
   if (name) {
     name = name.toLowerCase();
     pokemonInfo = await forName(name);
-    if (!pokemonInfo.length)
-      return res.json({ info: "No se encontro el pokemon" });
+    if (!pokemonInfo.length) return res.json([]);
     return res.json(pokemonInfo);
   }
 
@@ -24,42 +23,51 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
   const pokemonInfo = await forId(id);
-  if (!pokemonInfo.id) return res.json({ info: "No se encontro el pokemon" });
+  if (!pokemonInfo.id) return res.json([]);
   res.json(pokemonInfo);
 });
 
 router.post("/", async (req, res) => {
-  let { name, vida, fuerza, defensa, velocidad, altura, peso, tipos } =
-    req.body;
-  if (
-    isNaN(vida) ||
-    isNaN(fuerza) ||
-    isNaN(defensa) ||
-    isNaN(velocidad) ||
-    isNaN(altura) ||
-    isNaN(peso)
-  )
-    return res.json({ info: "Alguno de los argumentos no es un numero" });
+  try {
+    let tipos = req.body.tipos;
+    const { name, height, weight, hp, attack, defense, speed } =
+      req.body.pokemon;
 
-  if (!name) return res.json({ info: "El nombre es obligatorio" });
+    if (
+      isNaN(hp) ||
+      isNaN(attack) ||
+      isNaN(defense) ||
+      isNaN(speed) ||
+      isNaN(height) ||
+      isNaN(weight)
+    ) {
+      return res.json({ info: "Alguno de los argumentos no es un numero" });
+    }
+    if (!name) return res.json({ info: "El nombre es obligatorio" });
+    
+    const existe = await Pokemon.findOne({ where: { name: name.toLowerCase() } });
+    if (existe) return res.json({ info: "El pokemon ya existe" });
 
-  const existe = await Pokemon.findOne({ where: { name: name } });
-  if (existe) return res.json({ info: "El pokemon ya existe" });
+    const pokemon = await Pokemon.create({
+      name: name.toLowerCase(),
+      vida: hp,
+      fuerza: attack,
+      defensa: defense,
+      velocidad: speed,
+      altura: height,
+      peso: weight,
+    });
 
-  const pokemon = await Pokemon.create({
-    name: name.toLowerCase(),
-    vida: Number(vida),
-    fuerza: Number(fuerza),
-    defensa: Number(defensa),
-    velocidad: Number(velocidad),
-    altura: Number(altura),
-    peso: Number(peso),
-  });
+    if (tipos.length === 0) {
+      tipos = [1];
+    }
+    
+    await pokemon.setTipos(tipos)
 
-  if (!tipos.length) tipos = [1];
-
-  await pokemon.setTipos(tipos);
-  res.json({ info: "Pokemon creado" });
+    res.json({ info: "Pokemon creado" });
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 module.exports = router;
